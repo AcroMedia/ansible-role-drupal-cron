@@ -1,0 +1,30 @@
+---
+- name: Check to see if the server already knows how to address {{ server_name }} with a loopback address
+  shell: >
+    getent hosts "{{ server_name }}" |grep ^127. | wc -l
+  register: hosts_count_results
+  changed_when: false
+  when: server_name is defined
+
+- name: Create a loopback entry for /etc/hosts so the cron job can hit {{ server_name }} on localhost
+  blockinfile:
+    dest: /etc/hosts
+    block: '127.0.0.1 {{ server_name }}'
+    state: present
+    backup: true
+    marker: "# {mark} ANSIBLE MANAGED BLOCK for {{ server_name }} Drupal Cron"
+  when: hosts_count_results is defined
+    and hosts_count_results.stdout is defined
+    and hosts_count_results.stdout|int == 0
+    and server_name is defined
+
+- name: Add the drupal cron job for {{ server_name }}
+  cron:
+    user: "{{ linux_owner }}"
+    name: "Drupal cron trigger for {{ server_name }}"
+    minute: "*/{{ every_x_minutes }}"
+    job: >
+      /usr/bin/curl -kSsL '{{ drupal_cron_url }}' > /dev/null
+  when: drupal_cron_url is defined
+    and linux_owner is defined
+    and server_name is defined
