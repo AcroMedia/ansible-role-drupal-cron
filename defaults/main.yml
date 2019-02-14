@@ -1,2 +1,5 @@
 ---
 every_x_minutes: 15
+drupal_cron_url: ''
+linux_owner: ''
+server_name: ''

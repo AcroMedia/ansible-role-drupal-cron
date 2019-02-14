@@ -4,7 +4,7 @@
     getent hosts "{{ server_name }}" |grep ^127. | wc -l
   register: hosts_count_results
   changed_when: false
-  when: server_name is defined
+  when: "server_name != ''"
 
 - name: Create a loopback entry for /etc/hosts so the cron job can hit {{ server_name }} on localhost
   blockinfile:
@@ -13,10 +13,10 @@
     state: present
     backup: true
     marker: "# {mark} ANSIBLE MANAGED BLOCK for {{ server_name }} Drupal Cron"
-  when: hosts_count_results is defined
+  when: "hosts_count_results is defined
     and hosts_count_results.stdout is defined
     and hosts_count_results.stdout|int == 0
-    and server_name is defined
+    and server_name != ''"
 
 - name: Add the drupal cron job for {{ server_name }}
   cron:
@@ -25,6 +25,6 @@
     minute: "*/{{ every_x_minutes }}"
     job: >
       /usr/bin/curl -kSsL '{{ drupal_cron_url }}' > /dev/null
-  when: drupal_cron_url is defined
-    and linux_owner is defined
-    and server_name is defined
+  when: "drupal_cron_url != ''
+    and linux_owner != ''
+    and server_name != ''"
