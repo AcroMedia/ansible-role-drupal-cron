@@ -1,5 +1,7 @@
 ---
 every_x_minutes: 15
+drupal_cron_hour: '*'
+drupal_cron_minute: '*/{{ every_x_minutes }}'
 drupal_cron_url: ''
 linux_owner: ''
 server_name: ''

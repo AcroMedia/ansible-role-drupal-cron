@@ -22,7 +22,8 @@
   cron:
     user: "{{ linux_owner }}"
     name: "Drupal cron trigger for {{ server_name }}"
-    minute: "*/{{ every_x_minutes }}"
+    hour: '{{ drupal_cron_hour }}'
+    minute: "{{ drupal_cron_minute }}"
     job: >
       /usr/bin/curl -kSsL '{{ drupal_cron_url }}' > /dev/null
   when: "drupal_cron_url != ''
