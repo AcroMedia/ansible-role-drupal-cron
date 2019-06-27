@@ -5,3 +5,8 @@ drupal_cron_minute: '*/{{ every_x_minutes }}'
 drupal_cron_url: ''
 linux_owner: ''
 server_name: ''
+drupal_cron_drush_path: ''
+drupal_cron_doc_root: ''
+drupal_cron_command: ''
+drupal_cron_env_path: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
+drupal_cron_env_columns: 72

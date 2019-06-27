@@ -1,22 +1,19 @@
 ---
-- name: Check to see if the server already knows how to address {{ server_name }} with a loopback address
-  shell: >
-    getent hosts "{{ server_name }}" |grep ^127. | wc -l
-  register: hosts_count_results
-  changed_when: false
-  when: "server_name != ''"
+- name: Build the cron command string for {{ server_name }} (cURL mode)
+  set_fact:
+    drupal_cron_command: >
+      /usr/bin/curl -kSsL --resolve "{{ server_name }}:80:127.0.0.1" --resolve "{{ server_name }}:443:127.0.0.1" '{{ drupal_cron_url }}' > /dev/null
+  when: drupal_cron_url != ''
+    and drupal_cron_command == ''
 
-- name: Create a loopback entry for /etc/hosts so the cron job can hit {{ server_name }} on localhost
-  blockinfile:
-    dest: /etc/hosts
-    block: '127.0.0.1 {{ server_name }}'
-    state: present
-    backup: true
-    marker: "# {mark} ANSIBLE MANAGED BLOCK for {{ server_name }} Drupal Cron"
-  when: "hosts_count_results is defined
-    and hosts_count_results.stdout is defined
-    and hosts_count_results.stdout|int == 0
-    and server_name != ''"
+- name: Build the cron command string for {{ server_name }} (Drush mode)
+  set_fact:
+    drupal_cron_command: >
+      cd {{ drupal_cron_doc_root }} && /usr/bin/env PATH={{ drupal_cron_env_path }} COLUMNS={{ drupal_cron_env_columns }} {{ drupal_cron_drush_path }} --uri={{ server_name }} --quiet cron
+  when: drupal_cron_doc_root != ''
+    and drupal_cron_drush_path != ''
+    and server_name != ''
+    and drupal_cron_command == ''
 
 - name: Add the drupal cron job for {{ server_name }}
   cron:
@@ -24,8 +21,6 @@
     name: "Drupal cron trigger for {{ server_name }}"
     hour: '{{ drupal_cron_hour }}'
     minute: "{{ drupal_cron_minute }}"
-    job: >
-      /usr/bin/curl -kSsL '{{ drupal_cron_url }}' > /dev/null
-  when: "drupal_cron_url != ''
+    job: "{{ drupal_cron_command }}"
+  when: drupal_cron_command != ''
     and linux_owner != ''
-    and server_name != ''"
