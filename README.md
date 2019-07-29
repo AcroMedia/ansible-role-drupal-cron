@@ -10,48 +10,49 @@ If specifying `drupal_cron_doc_root` + `drupal_cron_drush_path`, Drush needs to 
 
 ## Role Variables
 
-### `linux_owner` - required
+### **linux_owner** - required
 The name of the linux account to create the cron job under.
 
-### `server_name` - reuired
+Be aware of permissions implications:
+
+- For curl mode (see below), the linux owner only needs to be able to execute curl commands.
+
+- For drush or custom modes (see below), **linux_owner** must be able to modify the files that PHP created. E.g. if you run PHP FPM, and your PHP process runs as its own user, that's who you need create the job under. If your PHP files are created by the www-data or apache user, that's who you need to create the cron job under.
+
+### **server_name** - required
 The domain name part of your drupal cron URL. This should match the "server_name" variable of your Apache or NGINX virtual host. It's used by ansible to tag the job's block in the crontab file. It's also used passed as the '--uri' variable to drush, when using
 
-### `drupal_cron_(url|doc_root,drush_path|command)` (string):
+### Cron modes:
 
-Specify either:
+The role suppports 3 different modes for setting up a cron job. The variables you set automatically determine the mode.
 
- - #### drupal_cron_url (string)
+- **cURL mode** (best for Drupal <= 7)
 
-    When this variable is used, the role will create a cURL command as the cron job that looks like:
+  ```yaml
+  drupal_cron_url: 'https://www.example.com/cron/abcdefgh12345678'
+  ```
+  - When cron url is specified, the role creates a cURL command cron job.
+  - The command includes cURL's `--resolve` switch, which maps `{{ server_name }}` to `127.0.0.1`. This is so cURL doens't try and hit a server's public interface from behind a firewall, which would normally time out.
 
-    ```
-    /usr/bin/curl -kSsL '{{ drupal_cron_url }}' > /dev/null
-    ```
 
-    Copy the cron URL from your drupal installation. It will look like
-    ```
-    https://myservername.com/cron/Jawefijawifaw3oij3oiuh2oui3hoiu2giuyg
-    ```
+- **Drush CLI mode** (best for Drupal >= 8)
 
-or
+  ```yaml
+  drupal_cron_doc_root: '/home/bigcorp/www/ecomsite/web'
+  drupal_cron_drush_path: '../vendor/drush/drush/drush'
+  ```
 
-- #### drupal_cron_doc_root (string) + drupal_cron_drush_path (string)
+  - When doc root + drush path are specified, the role constructs a drush CLI command cron job. The value for `drupal_cron_doc_root` must be the absolute path to directory you'd normally execute Drush commands from the command line. The value for `drupal_cron_drush_path` can either be relative to the doc root, or an absolute path.
 
-   When this pair is used, the role will create a drush command as the cron job that looks like:
 
-   ```
-   /usr/bin/env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin COLUMNS=72 {{ drupal_cron_drush_path }} --uri={{ server_name }} --root='{{ drupal_cron_doc_root }}' --quiet cron
-   ```
+- **Custom mode**
 
-   drupal_cron_doc_root = the web root / base of your drupal install
+  If neither of the above two constructors provide what you need, you can specify your own arbitrary shell command to execute in the cron job:
 
-   drupal_cron_drush_path = relative path from your doc root to the drush binary, or an absolute path to the global drush binary
-
-or
-
- - #### drupal_cron_command
-
-   If neither of the above two constructors provide what you need, you can specify your own shell command to execute in the cron job.
+  ```yaml
+  drupal_cron_command: >
+    cd /path/to/someplace && /usr/local/bin/custom-stuff.sh --foo-bar
+  ```
 
 ## Role defaults
 
@@ -66,9 +67,9 @@ See also defaults/main.yml for undocumented defaults.
 
 ## Example
 
-* **Pro tip no. 1:** Don't run the role against more than one node of a multi-server application.
+* **Pro tip no. 1:** Avoid running the role against more than one node of a multi-server application.
 
-* **Pro tip no. 2:** Don't re-use the same role twice in the same play. Split up role instances into individual plays to avoid variable bleed.
+* **Pro tip no. 2:** Don't ever re-use any ansible role twice in the same play. Split up role instances into individual plays to avoid variable bleed.
 
 ```yaml
 ---
