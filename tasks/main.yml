@@ -3,6 +3,7 @@
   set_fact:
     drupal_cron_command: >
       /usr/bin/curl -kSsL --resolve "{{ server_name }}:80:127.0.0.1" --resolve "{{ server_name }}:443:127.0.0.1" '{{ drupal_cron_url }}' > /dev/null
+    drupal_cron_command_auto_generated: true
   when: drupal_cron_url != ''
     and drupal_cron_command == ''
 
@@ -10,6 +11,7 @@
   set_fact:
     drupal_cron_command: >
       cd {{ drupal_cron_doc_root }} && /usr/bin/env PATH={{ drupal_cron_env_path }} COLUMNS={{ drupal_cron_env_columns }} {{ drupal_cron_drush_path }} --uri={{ server_name }} --quiet cron
+    drupal_cron_command_auto_generated: true
   when: drupal_cron_doc_root != ''
     and drupal_cron_drush_path != ''
     and server_name != ''
@@ -24,3 +26,10 @@
     job: "{{ drupal_cron_command }}"
   when: drupal_cron_command != ''
     and linux_owner != ''
+
+- name: Clear value for drupal_cron_command, since we set it ourselves
+  set_fact:
+    drupal_cron_command: ''
+    drupal_cron_command_auto_generated: false
+  when: drupal_cron_command_auto_generated is defined
+    and drupal_cron_command_auto_generated == true
