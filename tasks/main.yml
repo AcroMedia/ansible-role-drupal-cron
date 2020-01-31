@@ -2,7 +2,8 @@
 - name: Build the cron command string for {{ server_name }} (cURL mode)
   set_fact:
     drupal_cron_command: >
-      /usr/bin/curl -kSsL --resolve "{{ server_name }}:80:127.0.0.1" --resolve "{{ server_name }}:443:127.0.0.1" '{{ drupal_cron_url }}' > /dev/null
+      /usr/bin/curl -kSsL --resolve "{{ server_name }}:80:127.0.0.1" \
+      --resolve "{{ server_name }}:443:127.0.0.1" '{{ drupal_cron_url }}' > /dev/null
     drupal_cron_command_auto_generated: true
   when: drupal_cron_url != ''
     and drupal_cron_command == ''
@@ -10,7 +11,9 @@
 - name: Build the cron command string for {{ server_name }} (Drush mode)
   set_fact:
     drupal_cron_command: >
-      cd {{ drupal_cron_doc_root }} && /usr/bin/env PATH={{ drupal_cron_env_path }} COLUMNS={{ drupal_cron_env_columns }} {{ drupal_cron_drush_path }} --uri={{ server_name }} --quiet cron
+      cd {{ drupal_cron_doc_root }} && /usr/bin/env \
+      PATH={{ drupal_cron_env_path }} COLUMNS={{ drupal_cron_env_columns }} \
+      {{ drupal_cron_drush_path }} --uri={{ server_name }} --quiet cron
     drupal_cron_command_auto_generated: true
   when: drupal_cron_doc_root != ''
     and drupal_cron_drush_path != ''
@@ -32,4 +35,4 @@
     drupal_cron_command: ''
     drupal_cron_command_auto_generated: false
   when: drupal_cron_command_auto_generated is defined
-    and drupal_cron_command_auto_generated == true
+    and drupal_cron_command_auto_generated
