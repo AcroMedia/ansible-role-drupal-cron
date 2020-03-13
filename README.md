@@ -10,6 +10,12 @@ If specifying `drupal_cron_doc_root` + `drupal_cron_drush_path`, Drush needs to 
 
 ## Role Variables
 
+### **drupal_cron_job_name** - required
+
+Technically, this is optional for backwards compatibility, but this really needs to be **carefully defined, and then never changed again**. It simply needs to be unique string per environment, since ansible uses it as an anchor to find and edit the correct job on the server.
+
+The original default for this was based on the value of `server_name` to avoid creating duplicate jobs on servers with multiple vhosts. The problem with that approach is that `server_name` may change across the lifespan of a website, which ends up creeating duplicate jobs. (see issue [#1](https://github.com/AcroMedia/ansible-role-drupal-cron/issues/1)).
+
 ### **linux_owner** - required
 The name of the linux account to create the cron job under.
 
@@ -20,15 +26,16 @@ Be aware of permissions implications:
 - For drush or custom modes (see below), **linux_owner** must be able to modify the files that PHP created. E.g. if you run PHP FPM, and your PHP process runs as its own user, that's who you need create the job under. If your PHP files are created by the www-data or apache user, that's who you need to create the cron job under.
 
 ### **server_name** - required
-The domain name part of your drupal cron URL. This should match the "server_name" variable of your Apache or NGINX virtual host. It's used by ansible to tag the job's block in the crontab file. It's also used passed as the '--uri' variable to drush, when using
+The fully qualified domain name part of your drupal cron URL (e.g. 'www.example.com', without any protocol or slashes). This should match the "server_name" variable of your Apache or NGINX virtual host.
 
-### Cron modes:
+## Cron modes:
 
 The role suppports 3 different modes for setting up a cron job. The variables you set automatically determine the mode.
 
 - **cURL mode** (best for Drupal <= 7)
 
   ```yaml
+  drupal_cron_job_name: Drupal cron for bigcorp production
   drupal_cron_url: 'https://www.example.com/cron/abcdefgh12345678'
   ```
   - When cron url is specified, the role creates a cURL command cron job.
@@ -38,7 +45,9 @@ The role suppports 3 different modes for setting up a cron job. The variables yo
 - **Drush CLI mode** (best for Drupal >= 8)
 
   ```yaml
-  drupal_cron_doc_root: '/home/bigcorp/www/ecomsite/web'
+  drupal_cron_job_name: Drupal cron for bigcorp production
+  drupal_cron_doc_root: '/var/bigcorp/www/ecomsite/web'
+  linux_owner: ecom-srv
   drupal_cron_drush_path: '../vendor/drush/drush/drush'
   ```
 
@@ -50,18 +59,36 @@ The role suppports 3 different modes for setting up a cron job. The variables yo
   If neither of the above two constructors provide what you need, you can specify your own arbitrary shell command to execute in the cron job:
 
   ```yaml
+  drupal_cron_job_name: Drupal cron for bigcorp production
+  linux_owner: someuser
   drupal_cron_command: >
     cd /path/to/someplace && /usr/local/bin/custom-stuff.sh --foo-bar
   ```
 
+## Changing the value of `server_name`
+
+If your playbook already uses `drupal_cron_job_name`, you're free to change `server_name` without any impact.
+
+If you haven't yet defined `drupal_cron_job_name`, then simply look up the current value of the job's name (`sudo crontab -l -u <linux_user>`), which will look something like this:
+```
+#Ansible: Drupal cron trigger for www.example.com
+          \^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^/ this is the job name
+```
+and add `drupal_cron_job_name: <current job name>` to your playbook.
+
+Even though the job name will be 'wrong' after your `server_name` changes, the job will not be duplicated.
+
+Obviously, you can also just delete the current job and let the playbook create a new one, but if your app is spread across a lot of servers, that could be tedious.
+
 ## Role defaults
+
 
 ### `every_x_minutes` (integer) = 15
 How often you want your cron job to run.
 
 For more granularity, you can specify `drupal_cron_hour` and `drupal_cron_minute` instead.
 
-See also defaults/main.yml for undocumented defaults.
+**See also**: defaults/main.yml for undocumented defaults.
 
 
 
@@ -90,6 +117,7 @@ See also defaults/main.yml for undocumented defaults.
      vars:
        linux_owner: blog1
        server_name: blog.bigcorp.com
+       drupal_cron_job_name: Drupal cron for bigcorp blog production
        drupal_cron_url: 'https://{{ server_name }}/cron.php?cron_key=abcdefgh12345678'
        every_x_minutes: 5
      tags:
@@ -104,6 +132,7 @@ See also defaults/main.yml for undocumented defaults.
      role: acromedia.drupal-cron
      vars:
        linux_owner: www-data
+       drupal_cron_job_name: Drupal cron for bigcorp shop production
        server_name: shop.bigcorp.com
        drupal_cron_doc_root: /var/www/vhosts/shop1/web
        drupal_cron_drush_path: ../vendor/drush/drush/drush
