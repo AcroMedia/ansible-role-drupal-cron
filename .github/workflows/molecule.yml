@@ -10,7 +10,7 @@ on:
       - master
 jobs:
   lint:
-    runs-on: ubuntu-centos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: checkout
         uses: actions/checkout@v2
