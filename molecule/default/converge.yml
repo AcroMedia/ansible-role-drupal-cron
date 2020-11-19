@@ -1,0 +1,21 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    linux_owner: blog1
+    server_name: blog.bigcorp.com
+    drupal_cron_job_name: Drupal cron for bigcorp blog production
+    drupal_cron_url: 'https://{{ server_name }}/cron.php?cron_key=abcdefgh12345678'
+    every_x_minutes: 5
+  pre_tasks:
+    - name: Add system users
+      user:
+        name: "blog1"
+        state: "present"
+        groups: "sudo"
+        append: yes
+
+
+  roles:
+    - role: ansible-role-drupal-cron
