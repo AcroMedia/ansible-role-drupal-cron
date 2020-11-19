@@ -1,0 +1,15 @@
+---
+- name: Check whether drupal cron is added successfully
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Check whether the cron key is added
+      shell: crontab -l | grep 'abcdefgh12345678'
+      become: yes
+      become_method: su
+      become_user: blog1
+      register: result
+    - debug:
+        var: result
+
