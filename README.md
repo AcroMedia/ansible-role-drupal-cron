@@ -1,4 +1,7 @@
 # ansible-role-drupal-cron
+
+![.github/workflows/molecule.yml](https://github.com/AcroMedia/ansible-role-drupal-cron/workflows/.github/workflows/molecule.yml/badge.svg)
+
 Set up a linux cron job to trigger Drupal Cron on a locally installed site.
 
 This role isn't usually added after a site is up and running, since it requires the cron URL, which won't exist until after the site has been configured.
