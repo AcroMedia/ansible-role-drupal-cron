@@ -11,3 +11,4 @@ drupal_cron_command: ''
 drupal_cron_env_path: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'
 drupal_cron_env_columns: 72
 drupal_cron_job_name: "Drupal cron trigger for {{ server_name }}"
+drupal_cron_job_state: present

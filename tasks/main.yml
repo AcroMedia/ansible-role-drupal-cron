@@ -24,10 +24,11 @@
     hour: '{{ drupal_cron_hour }}'
     minute: "{{ drupal_cron_minute }}"
     job: "{{ drupal_cron_command }}"
+    state: "{{ drupal_cron_job_state }}"
   when: drupal_cron_command != ''
     and linux_owner != ''
 
-- name: Clear value for drupal_cron_command, since we set it ourselves
+- name: Clear value for drupal_cron_command when it was auto-defined
   set_fact:
     drupal_cron_command: ''
     drupal_cron_command_auto_generated: false
