@@ -83,6 +83,16 @@ Even though the job name will be 'wrong' after your `server_name` changes, the j
 
 Obviously, you can also just delete the current job and let the playbook create a new one, but if your app is spread across a lot of servers, that could be tedious.
 
+## Removing a cron job
+
+To remove a cron job, append 
+```
+drupal_cron_job_state: absent
+```
+to your variables and run your playbook. You must leave the existing ones you have in place, so that Ansible can find and target the job to remove. 
+
+Once you've run your playbook to remove the cron job, you can then remove the rest of the drupal cron variables.
+
 ## Role defaults
 
 
